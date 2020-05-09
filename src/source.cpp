@@ -9,9 +9,9 @@ ACTION source::feed(uint64_t pairid, double price0, double price1)
    uint64_t price0_fixed = price0 * 10000l;
    uint64_t price1_fixed = price1 * 10000l;
 
-   auto itr = _prices.find(pairid);
+   auto itr = _markets.find(pairid);
 
-   check(itr != _prices.end(), "pair not found");
+   check(itr != _markets.end(), "pair not found");
 
    auto last_sec = itr->last_update.sec_since_epoch();
 
@@ -27,7 +27,7 @@ ACTION source::feed(uint64_t pairid, double price0, double price1)
       timeElapsed = current_time_point().sec_since_epoch() - itr->last_update.sec_since_epoch();
    }
 
-   _prices.modify(itr, get_self(), [&](auto &s) {
+   _markets.modify(itr, get_self(), [&](auto &s) {
       check(s.price0_cumulative_last < (s.price0_cumulative_last + price0_fixed * timeElapsed), "price0 cumulative overflow");
       check(s.price1_cumulative_last < (s.price1_cumulative_last + price1_fixed * timeElapsed), "price1 cumulative overflow");
 
@@ -41,8 +41,8 @@ ACTION source::create(name contract0, name contract1, symbol sym0, symbol sym1)
 {
    require_auth(get_self());
 
-   _prices.emplace(get_self(), [&](auto &s) {
-      s.key = _prices.available_primary_key();
+   _markets.emplace(get_self(), [&](auto &s) {
+      s.mid = _markets.available_primary_key();
       s.contract0 = contract0;
       s.contract1 = contract1;
       s.sym0 = sym0;
